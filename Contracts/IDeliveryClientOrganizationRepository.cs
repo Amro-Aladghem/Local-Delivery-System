@@ -1,0 +1,17 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using Entities.Models;
+
+namespace Contracts
+{
+    public interface IDeliveryClientOrganizationRepository
+    {
+        void CreateDeliveryClientOrganization(DeliveryClientOrganization deliveryClientOrganization);
+        void DeleteDeliveryClientOrganization(DeliveryClientOrganization deliveryClientOrganization);
+        Task<DeliveryClientOrganization> GetDeliveryClientOrganization(Guid Id, bool trackChanges);
+        void UpdateDeliveryClientOrganization(DeliveryClientOrganization deliveryClientOrganization);
+    }
+}
