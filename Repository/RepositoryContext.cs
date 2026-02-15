@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Repository
 {
-    public class RepositoryContext : IdentityDbContext<User>
+    public class RepositoryContext : IdentityDbContext<User,Role,Guid>
     {
         public RepositoryContext(DbContextOptions<RepositoryContext> options) : base(options) { }
 

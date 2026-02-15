@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace DeliveryManagmentSystem.Migrations
 {
     /// <inheritdoc />
-    public partial class FirstMigration : Migration
+    public partial class initial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -17,7 +17,7 @@ namespace DeliveryManagmentSystem.Migrations
                 name: "AspNetRoles",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Name = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     ConcurrencyStamp = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
@@ -126,7 +126,7 @@ namespace DeliveryManagmentSystem.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    RoleId = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    RoleId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     ClaimType = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
                     ClaimValue = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
                 },
@@ -145,7 +145,7 @@ namespace DeliveryManagmentSystem.Migrations
                 name: "AspNetUsers",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     FirstName = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
                     LastName = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
                     ImageUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
@@ -186,8 +186,9 @@ namespace DeliveryManagmentSystem.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    NameAr = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    CountryId = table.Column<int>(type: "int", nullable: false)
+                    NameAr = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    CountryId = table.Column<int>(type: "int", nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -206,7 +207,7 @@ namespace DeliveryManagmentSystem.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    UserId = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     ClaimType = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
                     ClaimValue = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
                 },
@@ -228,7 +229,7 @@ namespace DeliveryManagmentSystem.Migrations
                     LoginProvider = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
                     ProviderKey = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
                     ProviderDisplayName = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    UserId = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false)
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -245,8 +246,8 @@ namespace DeliveryManagmentSystem.Migrations
                 name: "AspNetUserRoles",
                 columns: table => new
                 {
-                    UserId = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    RoleId = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false)
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    RoleId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -269,7 +270,7 @@ namespace DeliveryManagmentSystem.Migrations
                 name: "AspNetUserTokens",
                 columns: table => new
                 {
-                    UserId = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     LoginProvider = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
                     Name = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
                     Value = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
@@ -397,15 +398,14 @@ namespace DeliveryManagmentSystem.Migrations
                     UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     DeliveryClientOrganizationId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     LastLoggedInDateTime = table.Column<DateTime>(type: "datetime2(0)", nullable: false, defaultValueSql: "GETDATE()"),
-                    DeliveryClientOrgUserRole = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    UserId1 = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
+                    DeliveryClientOrgUserRole = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_DeliveryClientUsers", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_DeliveryClientUsers_AspNetUsers_UserId1",
-                        column: x => x.UserId1,
+                        name: "FK_DeliveryClientUsers_AspNetUsers_UserId",
+                        column: x => x.UserId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
@@ -555,15 +555,14 @@ namespace DeliveryManagmentSystem.Migrations
                     UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     DeliveryCompanyId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     DeliveryCompanyUserRole = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    LastLoggedInDateTime = table.Column<DateTime>(type: "datetime2(0)", nullable: false, defaultValueSql: "GETDATE()"),
-                    UserId1 = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
+                    LastLoggedInDateTime = table.Column<DateTime>(type: "datetime2(0)", nullable: false, defaultValueSql: "GETDATE()")
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_DeliveryCompanyUsers", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_DeliveryCompanyUsers_AspNetUsers_UserId1",
-                        column: x => x.UserId1,
+                        name: "FK_DeliveryCompanyUsers_AspNetUsers_UserId",
+                        column: x => x.UserId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
@@ -585,15 +584,14 @@ namespace DeliveryManagmentSystem.Migrations
                     DrivingLicenseImageUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
                     VechicalNumber = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
                     VechicalTypeId = table.Column<int>(type: "int", nullable: false),
-                    LastLoggedInTime = table.Column<DateTime>(type: "datetime2(0)", nullable: false, defaultValueSql: "GETDATE()"),
-                    UserId1 = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
+                    LastLoggedInTime = table.Column<DateTime>(type: "datetime2(0)", nullable: false, defaultValueSql: "GETDATE()")
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Drivers", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Drivers_AspNetUsers_UserId1",
-                        column: x => x.UserId1,
+                        name: "FK_Drivers_AspNetUsers_UserId",
+                        column: x => x.UserId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
@@ -850,9 +848,9 @@ namespace DeliveryManagmentSystem.Migrations
                 columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
                 values: new object[,]
                 {
-                    { "a3c7e9f1-6b2d-4c5a-b8f7-1d2e3c4b5a6f", null, "Driver", "DRIVER" },
-                    { "e1f3c9a4-7d5b-4b2d-a2f7-9a1b2c3d4e5f", null, "DeliveryClient", "DELIVERYCLIENT" },
-                    { "f2d4b1c7-8e6a-4f3c-b5a8-7d9e0f1a2b3c", null, "DeliveryCompanyUser", "DELIVERYCOMPANYUSER" }
+                    { new Guid("a3c7e9f1-6b2d-4c5a-b8f7-1d2e3c4b5a6f"), null, "Driver", "DRIVER" },
+                    { new Guid("e1f3c9a4-7d5b-4b2d-a2f7-9a1b2c3d4e5f"), null, "DeliveryClient", "DELIVERYCLIENT" },
+                    { new Guid("f2d4b1c7-8e6a-4f3c-b5a8-7d9e0f1a2b3c"), null, "DeliveryCompanyUser", "DELIVERYCOMPANYUSER" }
                 });
 
             migrationBuilder.InsertData(
@@ -1028,9 +1026,9 @@ namespace DeliveryManagmentSystem.Migrations
                 column: "DeliveryClientOrganizationId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_DeliveryClientUsers_UserId1",
+                name: "IX_DeliveryClientUsers_UserId",
                 table: "DeliveryClientUsers",
-                column: "UserId1");
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_DeliveryCompanies_CityId",
@@ -1073,9 +1071,9 @@ namespace DeliveryManagmentSystem.Migrations
                 column: "DeliveryCompanyId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_DeliveryCompanyUsers_UserId1",
+                name: "IX_DeliveryCompanyUsers_UserId",
                 table: "DeliveryCompanyUsers",
-                column: "UserId1");
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_DeliveryOrderAddresses_ClientDeliveryOrderId",
@@ -1140,9 +1138,9 @@ namespace DeliveryManagmentSystem.Migrations
                 column: "DeliveryCompanyId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Drivers_UserId1",
+                name: "IX_Drivers_UserId",
                 table: "Drivers",
-                column: "UserId1");
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Drivers_VechicalNumber",
