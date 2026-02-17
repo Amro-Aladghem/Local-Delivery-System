@@ -12,7 +12,7 @@ namespace Entities.Models
         public string? FirstName { get; set; }
         public string? LastName { get; set; }
         public string? ImageUrl { get; set; }
-        public int CountryId { get; set; }
+        public int? CountryId { get; set; }
         public string? ReffreshToken { get; set; }
         public DateTime? ReffreshTokenExpired { get; set; }
         public bool IsActive { get; set; }
