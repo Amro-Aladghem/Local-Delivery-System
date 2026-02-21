@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Presentation.Extentions;
 using Service.Contracts;
@@ -14,7 +15,7 @@ namespace Presentation.Controllers
 {
     [Route("api/authentication")]
     [ApiController]
-    public class AuthController :ControllerBase
+    public class AuthController:ControllerBase
     {
         private readonly IAuthService _authService;
         public AuthController(IAuthService authService)
@@ -30,16 +31,15 @@ namespace Presentation.Controllers
         {
             string authApproach = string.IsNullOrEmpty(userForAuthenticationRequest.Email) ? "Phone" : "Email";
 
-            UserForAuthenticationResponse? user = await _authService.AuthenticateUser(userForAuthenticationRequest);
+            AuthUserResponseResult? Result = await _authService.AuthenticateUser(userForAuthenticationRequest);
 
-            if (user == null)
+            if (Result == null)
                 return BadRequest(new { message = $"{authApproach} or Password is not correct!" });
 
-            var tokenDto = await _authService.CreateToken(populateExp: true);
 
-            Response.SetTokendDtoIntoCoookie(tokenDto, 5, 7, true);
+            Response.SetTokendDtoIntoCoookie(Result.Token,7, true);
 
-            return Ok(user);
+            return Ok(Result.User);
         }
 
         [HttpPost("pre-register")]
@@ -48,34 +48,53 @@ namespace Presentation.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<UserPreRegisterResponse>> PreRegister(UserPreRegisterRequest userPreRegisterRequest)
         {
-            UserPreRegisterResponse? user = await _authService.PreRegisterUser(userPreRegisterRequest);
+            PreRegisterResponseResult? Result = await _authService.PreRegisterUser(userPreRegisterRequest);
 
-            if (user == null)
+            if (Result == null)
                 return StatusCode(StatusCodes.Status500InternalServerError, new {message="Server Error!"});
 
-            var tokenDto = await _authService.CreateToken(populateExp: false);
+            Response.SetTokendDtoIntoCoookie(Result.Token,0, false,1);
 
-            Response.SetTokendDtoIntoCoookie(tokenDto, 5, 0, false);
-
-            return Ok(user);
+            return Ok(Result.User);
         }
 
         [HttpPost("register")]
+        [Authorize(Policy = "PreRegisterUser")]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<UserForAuthenticationResponse>> RegisterUser(UserForRegisterationRequest registerUserRequest)
         {
-            UserForAuthenticationResponse? user = await _authService.RegisterUser(registerUserRequest);
+            AuthUserResponseResult? Result = await _authService.RegisterUser(registerUserRequest);
 
-            if (user == null)
+            if (Result == null)
                 return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Server Error!" });
 
-            var tokenDto = await _authService.CreateToken(populateExp: false);
+            Response.SetTokendDtoIntoCoookie(Result.Token, 7, true);
 
-            Response.SetTokendDtoIntoCoookie(tokenDto, 5, 7, true);
+            return Ok(Result.User);
+        }
 
-            return Ok(user);
+        [HttpPost("refresh")]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult> RefreshToken()
+        {
+            string accessToken = Request.Cookies["accessToken"];
+            string refreshToken = Request.Cookies["refreshToken"];
+
+            if (string.IsNullOrEmpty(accessToken) || string.IsNullOrEmpty(refreshToken))
+                return Unauthorized();
+
+            TokenDto? tokenDto = await _authService.RefreshToken(accessToken, refreshToken);
+
+            if (tokenDto is null)
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Failed to generate token!" });
+
+            Response.SetTokendDtoIntoCoookie(tokenDto, 7, true);
+
+            return Ok(true);
         }
 
     }

@@ -12,14 +12,16 @@ namespace Presentation.Extentions
 {
     public static class CookieExtension
     {
-        public static void SetTokendDtoIntoCoookie(this HttpResponse response,TokenDto tokens,int AccessTime,int RefreshTime,bool HasRefresh=true)
+        public static void SetTokendDtoIntoCoookie(this HttpResponse response,TokenDto tokens,int RefreshTime,bool HasRefresh=true, int AccessTime=0)
         {
+            DateTime ExpiredAccessTokenTimeCookie = RefreshTime == 0 ? DateTime.UtcNow.AddHours(AccessTime) : DateTime.UtcNow.AddDays(RefreshTime);
+
             response.Cookies.Append("AuthToken", tokens.AccessToken, new CookieOptions()
             {
                 HttpOnly = true,
                 SameSite = SameSiteMode.None,
                 Secure = true,
-                Expires = DateTime.UtcNow.AddHours(AccessTime)
+                Expires = ExpiredAccessTokenTimeCookie
             });
 
             if(HasRefresh)
