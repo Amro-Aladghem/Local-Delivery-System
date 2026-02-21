@@ -27,17 +27,19 @@ namespace Service.UserService
         private readonly ILogger _logger;
         private readonly IOptions<JwtConfiguration> _configuration;
 
-        private readonly JwtConfiguration _jwtConfiguration;
+        private JwtConfiguration _jwtConfiguration;
 
-        private User? _user;
+        //private User? _user;
         public AuthService(UserManager<User> userManager, IMapper mapper, ILogger logger,IOptions<JwtConfiguration> jwtConfiguration)
         {
             _userManager = userManager;
             _mapper = mapper;
             _logger = logger;
-            _jwtConfiguration = jwtConfiguration.Value;
+            _configuration = jwtConfiguration;
+
+            _jwtConfiguration = _configuration.Value;
         }
-        public async Task<UserForAuthenticationResponse?> AuthenticateUser(UserForAuthenticationRequest request)
+        public async Task<AuthUserResponseResult?> AuthenticateUser(UserForAuthenticationRequest request)
         {
             eAuthWith eAuthWith = string.IsNullOrEmpty(request.Email) ? eAuthWith.Phone : eAuthWith.Email;
 
@@ -53,13 +55,17 @@ namespace Service.UserService
 
             var userRoles = await  _userManager.GetRolesAsync(user);
 
-            UserForAuthenticationResponse response = _mapper.Map<User,UserForAuthenticationResponse>(user);
-            response.SystemRole = userRoles[0];
+            UserForAuthenticationResponse AuthUser = _mapper.Map<User,UserForAuthenticationResponse>(user);
+            AuthUser.SystemRole = userRoles[0];
 
-            return response;
+            TokenDto? tokenDto = await CreateToken(true, user);
+
+            if(tokenDto is null) return null;
+
+            return new AuthUserResponseResult() { Token = tokenDto,User= AuthUser };
         }
 
-        public async Task<UserPreRegisterResponse?> PreRegisterUser(UserPreRegisterRequest request)
+        public async Task<PreRegisterResponseResult?> PreRegisterUser(UserPreRegisterRequest request)
         {
             User user = _mapper.Map<UserPreRegisterRequest,User>(request);
             user.IsActive = false;
@@ -74,15 +80,20 @@ namespace Service.UserService
             if (!roleResult.Succeeded)
                 return null;
 
-            UserPreRegisterResponse response = _mapper.Map<UserPreRegisterRequest, UserPreRegisterResponse>(request);
-            response.UserId = user.Id;
+            UserPreRegisterResponse AuthUser = _mapper.Map<UserPreRegisterRequest, UserPreRegisterResponse>(request);
+            AuthUser.UserId = user.Id;
 
-            return response;
+            TokenDto? token = await CreateToken(true, user);
+
+            if (token is null) return null;
+
+            return new PreRegisterResponseResult() { Token = token, User = AuthUser };
         }
 
-        public async Task<UserForAuthenticationResponse?> RegisterUser(UserForRegisterationRequest request)
+        public async Task<AuthUserResponseResult?> RegisterUser(UserForRegisterationRequest request)
         {
             User? user = await _userManager.Users.FirstOrDefaultAsync(U => U.Id == request.UserId &&U.IsActive ==false);
+
             if (user is null)
                 return null;
 
@@ -95,10 +106,14 @@ namespace Service.UserService
 
             var userRoles = await _userManager.GetRolesAsync(user);
 
-            UserForAuthenticationResponse response = _mapper.Map<User, UserForAuthenticationResponse>(user);
-            response.SystemRole = userRoles[0];
+            UserForAuthenticationResponse AuthUser = _mapper.Map<User, UserForAuthenticationResponse>(user);
+            AuthUser.SystemRole = userRoles[0];
 
-            return response;
+            TokenDto? tokenDto = await CreateToken(true, user);
+
+            if (tokenDto is null) return null;
+
+            return new AuthUserResponseResult() { Token = tokenDto, User = AuthUser };
         }
 
         private SigningCredentials GetSigningCredentials()
@@ -109,24 +124,24 @@ namespace Service.UserService
             return new SigningCredentials(secret, SecurityAlgorithms.HmacSha256);
         }
 
-        private async Task<List<Claim>> GetClaims()
+        private async Task<List<Claim>> GetClaims(User user)
         {
-            string userName = $"{_user?.FirstName} {_user?.LastName}".Trim();
-            string countryId = _user?.CountryId?.ToString() ?? "0";
+            string userName = $"{user?.FirstName} {user?.LastName}".Trim();
+            string countryId = user?.CountryId?.ToString() ?? "0";
 
             if (string.IsNullOrWhiteSpace(userName))
             {
-                userName = _user?.UserName ?? "PreRegisterUser";
+                userName = user?.UserName ?? "PreRegisterUser";
             }
 
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.Name,userName),
                 new Claim(ClaimTypes.Country, countryId),
-                new Claim(ClaimTypes.NameIdentifier,_user.Id.ToString()),
+                new Claim(ClaimTypes.NameIdentifier,user.Id.ToString()),
             };
 
-            var roles = await _userManager.GetRolesAsync(_user!);
+            var roles = await _userManager.GetRolesAsync(user!);
             foreach (var role in roles)
             {
                 claims.Add(new Claim(ClaimTypes.Role, role));
@@ -170,7 +185,7 @@ namespace Service.UserService
                 ValidateIssuer = true,
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtConfiguration.Secrete)),
-                ValidateLifetime = true,
+                ValidateLifetime = false,
                 ValidIssuer = _jwtConfiguration.ValidIssuer,
                 ValidAudience = _jwtConfiguration.ValidAudience,
             };
@@ -188,30 +203,33 @@ namespace Service.UserService
             return principal;
         }
 
-        public async Task<TokenDto> CreateToken(bool populateExp)
+        private async Task<TokenDto?> CreateToken(bool populateExp,User user)
         {
             var signingCredentials = GetSigningCredentials();
 
-            var claims = await GetClaims();
+            var claims = await GetClaims(user);
             var tokenOptions = GenerateTokenOptions(signingCredentials, claims);
 
             var refreshToken = GenerateRefreshToken();
 
-            _user.ReffreshToken = refreshToken;
+            user.ReffreshToken = refreshToken;
 
             if (populateExp)
-                _user.ReffreshTokenExpired = DateTime.Now.AddDays(7);
+                user.ReffreshTokenExpired = DateTime.Now.AddDays(7);
 
-            await _userManager.UpdateAsync(_user);
+            var result = await _userManager.UpdateAsync(user);
+
+            if (!result.Succeeded)
+                return null;
 
             var accessToken = new JwtSecurityTokenHandler().WriteToken(tokenOptions);
 
             return new TokenDto(accessToken, refreshToken);
         }
 
-        public async Task<TokenDto> RefreshToken(TokenDto tokenDto)
+        public async Task<TokenDto?> RefreshToken(string AccessToken,string RefreshToken)
         {
-            var principal = GetPrincipalFromExpiredToken(tokenDto.AccessToken);
+            var principal = GetPrincipalFromExpiredToken(AccessToken);
 
             var userIdClaim = principal.FindFirst(ClaimTypes.NameIdentifier);
 
@@ -222,12 +240,11 @@ namespace Service.UserService
 
             var user = await _userManager.FindByIdAsync(userIdClaim.Value);
 
-            if (user == null || user.ReffreshToken != tokenDto.RefreshToken ||
+            if (user == null || user.ReffreshToken != RefreshToken ||
             user.ReffreshTokenExpired <= DateTime.Now)
                 throw new ReffreshTokenBadRequest("Invailed Token");
 
-            _user = user;
-            return await CreateToken(populateExp: false);
+            return await CreateToken(populateExp: false,user);
         }
 
     }
