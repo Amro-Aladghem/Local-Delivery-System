@@ -1,4 +1,5 @@
 ﻿using Contracts;
+using Microsoft.EntityFrameworkCore.Storage;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -92,6 +93,21 @@ namespace Repository
         public IDeliveryOrderAddressRepository DeliveryOrderAddress => _deliveryOrderAddressRepository.Value;
         public IDriverRepository Driver => _driverRepository.Value;
         public IDriverAssignmentRepository DriverAssignment => _driverAssignmentRepository.Value;
+
+        public async Task<IDbContextTransaction> BeginTransactionAsync()
+        {
+            return await _repositoryContext.Database.BeginTransactionAsync();
+        }
+
+        public async Task CommitTransactionAsync()
+        {
+            await _repositoryContext.Database.CommitTransactionAsync();
+        }
+
+        public async Task RollbackTransactionAsync()
+        {
+            await _repositoryContext.Database.RollbackTransactionAsync();
+        }
 
         public async Task<bool> SaveAsync()
         {

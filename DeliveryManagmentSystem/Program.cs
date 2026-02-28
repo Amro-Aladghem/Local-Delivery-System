@@ -10,6 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
+builder.Services.ConfigureServices();
 
 builder.Services.AddAutoMapper(typeof(Program));
 builder.Services.AddValidatorsFromAssembly(typeof(AssemblyRefference).Assembly);

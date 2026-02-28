@@ -12,6 +12,7 @@ namespace Contracts
         void CreateDriver(Driver driver);
         void DeleteDriver(Driver driver);
         Task<Driver> GetDriver(Guid Id, bool trackChanges);
+        Task<Guid?> GetDriverIdByUserIdentityId(Guid IdentityId, bool trackChanges);
         void UpdateDriver(Driver driver);
     }
 }

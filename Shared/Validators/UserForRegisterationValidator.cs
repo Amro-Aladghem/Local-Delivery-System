@@ -14,7 +14,6 @@ namespace Shared.Validators
     {
         public UserForRegisterationValidator()
         {
-            RuleFor(p => p.UserId).NotEmpty();
             RuleFor(p => p.FirstName)
                 .NotEmpty().WithMessage("The FirstName is Empty");
             RuleFor(p => p.LastName)

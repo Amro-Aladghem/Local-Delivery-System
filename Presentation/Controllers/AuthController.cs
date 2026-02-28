@@ -58,22 +58,22 @@ namespace Presentation.Controllers
             return Ok(Result.User);
         }
 
-        [HttpPost("register")]
-        [Authorize(Policy = "PreRegisterUser")]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<UserForAuthenticationResponse>> RegisterUser(UserForRegisterationRequest registerUserRequest)
-        {
-            AuthUserResponseResult? Result = await _authService.RegisterUser(registerUserRequest);
+        //[HttpPost("register")]
+        //[Authorize(Policy = "PreRegisterUser")]
+        //[ProducesResponseType(StatusCodes.Status400BadRequest)]
+        //[ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        //[ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        //public async Task<ActionResult<UserForAuthenticationResponse>> RegisterUser(UserForRegisterationRequest registerUserRequest)
+        //{
+        //    AuthUserResponseResult? Result = await _authService.RegisterUser(registerUserRequest);
 
-            if (Result == null)
-                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Server Error!" });
+        //    if (Result == null)
+        //        return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Server Error!" });
 
-            Response.SetTokendDtoIntoCoookie(Result.Token, 7, true);
+        //    Response.SetTokendDtoIntoCoookie(Result.Token, 7, true);
 
-            return Ok(Result.User);
-        }
+        //    return Ok(Result.User);
+        //}
 
         [HttpPost("refresh")]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]

@@ -11,11 +11,11 @@ namespace Entities.Models
     {
         public Guid Id { get; set; }
         public Guid UserId { get; set; } 
-        public Guid DeliveryClientOrganizationId { get; set; }
+        public Guid? DeliveryClientOrganizationId { get; set; }
         public DateTime LastLoggedInDateTime { get; set; }
-        public DeliveryClientOrgUserRole DeliveryClientOrgUserRole { get; set; }
+        public DeliveryClientOrgUserRole? DeliveryClientOrgUserRole { get; set; }
 
-        public DeliveryClientOrganization DeliveryClientOrganization { get; set; }
+        public DeliveryClientOrganization? DeliveryClientOrganization { get; set; }
         public User User { get; set; }
     }
 }

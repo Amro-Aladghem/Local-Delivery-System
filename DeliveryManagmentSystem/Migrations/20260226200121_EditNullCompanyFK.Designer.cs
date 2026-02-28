@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Repository;
 
@@ -11,9 +12,11 @@ using Repository;
 namespace DeliveryManagmentSystem.Migrations
 {
     [DbContext(typeof(RepositoryContext))]
-    partial class RepositoryContextModelSnapshot : ModelSnapshot
+    [Migration("20260226200121_EditNullCompanyFK")]
+    partial class EditNullCompanyFK
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1085,12 +1088,6 @@ namespace DeliveryManagmentSystem.Migrations
                             Id = new Guid("a3c7e9f1-6b2d-4c5a-b8f7-1d2e3c4b5a6f"),
                             Name = "Driver",
                             NormalizedName = "DRIVER"
-                        },
-                        new
-                        {
-                            Id = new Guid("a3c9e9f1-6b2d-4c5a-b8f7-1d2e3c4b5a6f"),
-                            Name = "PreRegister",
-                            NormalizedName = "PREREGISTER"
                         });
                 });
 

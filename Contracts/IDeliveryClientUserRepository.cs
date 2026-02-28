@@ -12,6 +12,8 @@ namespace Contracts
         void CreateDeliveryClientUser(DeliveryClientUser deliveryClientUser);
         void DeleteDeliveryClientUser(DeliveryClientUser deliveryClientUser);
         Task<DeliveryClientUser> GetDeliveryClientUser(Guid Id, bool trackChanges);
+        Task<Guid?> GetDeliveryClientUserIdByIdentityId(Guid IdentityId, bool trackChanges);
+
         void UpdateDeliveryClientUser(DeliveryClientUser deliveryClientUser);
     }
 }
