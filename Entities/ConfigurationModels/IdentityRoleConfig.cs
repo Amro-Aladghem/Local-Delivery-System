@@ -32,6 +32,12 @@ namespace Entities.ConfigurationModels
                      Id = new Guid("a3c7e9f1-6b2d-4c5a-b8f7-1d2e3c4b5a6f"),
                      Name = "Driver",
                      NormalizedName = "DRIVER"
+                 },
+                 new Role
+                 {
+                     Id = new Guid("a3c9e9f1-6b2d-4c5a-b8f7-1d2e3c4b5a6f"),
+                     Name = "PreRegister",
+                     NormalizedName = "PREREGISTER"
                  }
             );
         }

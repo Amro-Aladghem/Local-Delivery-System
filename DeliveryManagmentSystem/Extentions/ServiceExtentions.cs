@@ -1,6 +1,10 @@
 ﻿using Entities.ConfigurationModels;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Service.Contracts;
+using Service.DeliveryClientUserService;
+using Service.DeliveryCompanyUserService;
+using Service.UserService;
 using System.Text;
 
 
@@ -38,6 +42,13 @@ namespace DeliveryManagmentSystem.Extentions
         public static void AddJWTConfiguration(this IServiceCollection services, IConfiguration configuration)
         {
             services.Configure<JwtConfiguration>(configuration.GetSection("JwtSettings"));
+        }
+
+        public static void ConfigureServices(this IServiceCollection services)
+        {
+            services.AddScoped<IDeliveryCompanyUser, DeliveryCompanyUserService>();
+            services.AddScoped<IDeliveryClientUser, DeliveryClientUserService>();
+            services.AddScoped<IAuthService, AuthService>();
         }
     }
 }

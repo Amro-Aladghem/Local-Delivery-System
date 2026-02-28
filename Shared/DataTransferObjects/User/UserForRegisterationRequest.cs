@@ -6,9 +6,8 @@ using System.Threading.Tasks;
 
 namespace Shared.DataTransferObjects.User
 {
-    public class UserForRegisterationRequest
-    {
-        public Guid UserId { get; set; }
+    public abstract class UserForRegisterationRequest
+    {   
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public int CountryId { get; set; }

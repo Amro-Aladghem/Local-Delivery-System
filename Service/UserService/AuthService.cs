@@ -1,7 +1,9 @@
 ﻿using AutoMapper;
+using Contracts;
 using Entities.ConfigurationModels;
 using Entities.Exceptions;
 using Entities.Models;
+using Enums;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -23,6 +25,7 @@ namespace Service.UserService
         enum eAuthWith { Email, Phone }
 
         private readonly UserManager<User> _userManager;
+        private readonly IManagerRepository _managerRepository;
         private readonly IMapper _mapper;
         private readonly ILogger _logger;
         private readonly IOptions<JwtConfiguration> _configuration;
@@ -30,18 +33,21 @@ namespace Service.UserService
         private JwtConfiguration _jwtConfiguration;
 
         //private User? _user;
-        public AuthService(UserManager<User> userManager, IMapper mapper, ILogger logger,IOptions<JwtConfiguration> jwtConfiguration)
+        public AuthService(UserManager<User> userManager, IMapper mapper, ILogger logger,IOptions<JwtConfiguration> jwtConfiguration,IManagerRepository managerRepository)
         {
             _userManager = userManager;
             _mapper = mapper;
             _logger = logger;
             _configuration = jwtConfiguration;
+            _managerRepository = managerRepository;
 
             _jwtConfiguration = _configuration.Value;
         }
+
         public async Task<AuthUserResponseResult?> AuthenticateUser(UserForAuthenticationRequest request)
         {
             eAuthWith eAuthWith = string.IsNullOrEmpty(request.Email) ? eAuthWith.Phone : eAuthWith.Email;
+            Guid? profileId = null;
 
             User ? user =  eAuthWith switch
             {
@@ -50,7 +56,7 @@ namespace Service.UserService
                 _=>null
             };
 
-            if (user is null)
+            if (user is null || !user.IsActive)
                 return null;
 
             var userRoles = await  _userManager.GetRolesAsync(user);
@@ -58,11 +64,29 @@ namespace Service.UserService
             UserForAuthenticationResponse AuthUser = _mapper.Map<User,UserForAuthenticationResponse>(user);
             AuthUser.SystemRole = userRoles[0];
 
-            TokenDto? tokenDto = await CreateToken(true, user);
+            profileId = await GetUserProfileId(userRoles[0], user.Id);
+
+            TokenDto? tokenDto = await CreateToken(true, user, profileId);
 
             if(tokenDto is null) return null;
 
             return new AuthUserResponseResult() { Token = tokenDto,User= AuthUser };
+        }
+
+        private async Task<Guid?> GetUserProfileId(string RoleName,Guid IdentityUserId)
+        {
+            Task<Guid?>? task = RoleName switch
+            {
+                "Driver"=>_managerRepository.Driver.GetDriverIdByUserIdentityId(IdentityUserId,false),
+                "DeliveryCompanyUser"=>_managerRepository.DeliveryCompanyUser.GetDeliveryCompanyUserIdByIdentityId(IdentityUserId,false),
+                "DeliveryClient" => _managerRepository.DeliveryClientUser.GetDeliveryClientUserIdByIdentityId(IdentityUserId,false),
+                _=> null
+            };
+
+            if (task is null) return null;
+
+            Guid? ProfileId = await task;
+            return ProfileId;
         }
 
         public async Task<PreRegisterResponseResult?> PreRegisterUser(UserPreRegisterRequest request)
@@ -75,7 +99,7 @@ namespace Service.UserService
             if (!result.Succeeded)
                 return null;
 
-            var roleResult = await _userManager.AddToRoleAsync(user,request.SystemRole);
+            var roleResult = await _userManager.AddToRoleAsync(user,SystemUserRoles.PreRegister.ToString());
 
             if (!roleResult.Succeeded)
                 return null;
@@ -90,9 +114,9 @@ namespace Service.UserService
             return new PreRegisterResponseResult() { Token = token, User = AuthUser };
         }
 
-        public async Task<AuthUserResponseResult?> RegisterUser(UserForRegisterationRequest request)
+        public async Task<UserForAuthenticationResponse?> RegisterUser(UserForRegisterationRequest request,Guid PreRegisterUserId,string systemUserRole)
         {
-            User? user = await _userManager.Users.FirstOrDefaultAsync(U => U.Id == request.UserId &&U.IsActive ==false);
+            User? user = await _userManager.Users.FirstOrDefaultAsync(U => U.Id == PreRegisterUserId && U.IsActive ==false);
 
             if (user is null)
                 return null;
@@ -104,16 +128,16 @@ namespace Service.UserService
             if (!result.Succeeded)
                 return null;
 
-            var userRoles = await _userManager.GetRolesAsync(user);
+            var roleResult = await _userManager.AddToRoleAsync(user,systemUserRole);
+
+            if (!roleResult.Succeeded)
+                return null;
+
 
             UserForAuthenticationResponse AuthUser = _mapper.Map<User, UserForAuthenticationResponse>(user);
-            AuthUser.SystemRole = userRoles[0];
+            AuthUser.SystemRole = systemUserRole;
 
-            TokenDto? tokenDto = await CreateToken(true, user);
-
-            if (tokenDto is null) return null;
-
-            return new AuthUserResponseResult() { Token = tokenDto, User = AuthUser };
+            return AuthUser;
         }
 
         private SigningCredentials GetSigningCredentials()
@@ -124,7 +148,7 @@ namespace Service.UserService
             return new SigningCredentials(secret, SecurityAlgorithms.HmacSha256);
         }
 
-        private async Task<List<Claim>> GetClaims(User user)
+        private async Task<List<Claim>> GetClaims(User user, Guid? ProfileId = null)
         {
             string userName = $"{user?.FirstName} {user?.LastName}".Trim();
             string countryId = user?.CountryId?.ToString() ?? "0";
@@ -140,6 +164,11 @@ namespace Service.UserService
                 new Claim(ClaimTypes.Country, countryId),
                 new Claim(ClaimTypes.NameIdentifier,user.Id.ToString()),
             };
+
+            if (ProfileId is not null)
+            {
+                claims.Add(new Claim("profile_id", ProfileId.ToString()));
+            }
 
             var roles = await _userManager.GetRolesAsync(user!);
             foreach (var role in roles)
@@ -163,7 +192,6 @@ namespace Service.UserService
             return tokenOptions;
         }
 
-
         private string GenerateRefreshToken()
         {
             var randomNumber = new byte[32];
@@ -174,7 +202,6 @@ namespace Service.UserService
                 return Convert.ToBase64String(randomNumber);
             }
         }
-
 
         private ClaimsPrincipal GetPrincipalFromExpiredToken(string token)
         {
@@ -203,11 +230,11 @@ namespace Service.UserService
             return principal;
         }
 
-        private async Task<TokenDto?> CreateToken(bool populateExp,User user)
+        private async Task<TokenDto?> CreateToken(bool populateExp,User user,Guid? ProfileId=null)
         {
             var signingCredentials = GetSigningCredentials();
 
-            var claims = await GetClaims(user);
+            var claims = await GetClaims(user,ProfileId);
             var tokenOptions = GenerateTokenOptions(signingCredentials, claims);
 
             var refreshToken = GenerateRefreshToken();
@@ -245,6 +272,15 @@ namespace Service.UserService
                 throw new ReffreshTokenBadRequest("Invailed Token");
 
             return await CreateToken(populateExp: false,user);
+        }
+
+        public async Task<TokenDto?> GenerateTokenForUser(Guid userId, Guid? profileId = null)
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+
+            if (user == null) return null;
+
+            return await CreateToken(populateExp: true, user, profileId);
         }
 
     }

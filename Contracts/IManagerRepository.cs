@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore.Storage;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -25,5 +26,8 @@ namespace Contracts
         public IDriverAssignmentRepository DriverAssignment { get; }
 
         Task<bool> SaveAsync();
+        Task<IDbContextTransaction> BeginTransactionAsync();
+        Task RollbackTransactionAsync();
+        Task CommitTransactionAsync();
     }
 }

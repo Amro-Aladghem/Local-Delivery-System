@@ -33,6 +33,13 @@ namespace Repository
 
             return deliveryClientUser!;
         }
+
+        public async Task<Guid?> GetDeliveryClientUserIdByIdentityId(Guid IdentityId, bool trackChanges)
+        {
+            Guid? DeliveryClientUserId = await FindByCondition(D => D.UserId == IdentityId, trackChanges).Select(D => D.Id).FirstOrDefaultAsync();
+            return DeliveryClientUserId;
+        }
+
         public void UpdateDeliveryClientUser(DeliveryClientUser deliveryClientUser)
         {
             Update(deliveryClientUser);

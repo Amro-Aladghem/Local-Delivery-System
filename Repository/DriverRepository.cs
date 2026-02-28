@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Repository
 {
-    public class DriverRepository :RepositoryBase<Driver>, IDriverRepository    
+    public class DriverRepository : RepositoryBase<Driver>, IDriverRepository
     {
         public DriverRepository(RepositoryContext repositoryContext)
             : base(repositoryContext)
@@ -32,6 +32,13 @@ namespace Repository
 
             return driver!;
         }
+
+        public async Task<Guid?> GetDriverIdByUserIdentityId(Guid IdentityId, bool trackChanges)
+        {
+            Guid? DriverId = await FindByCondition(D=>D.UserId==IdentityId,trackChanges).Select(D=>D.Id).FirstOrDefaultAsync();
+            return DriverId;
+        }
+
         public void UpdateDriver(Driver driver)
         {
             Update(driver);

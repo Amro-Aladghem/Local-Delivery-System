@@ -32,6 +32,13 @@ namespace Repository
 
             return deliveryCompanyUser!;
         }
+
+        public async Task<Guid?> GetDeliveryCompanyUserIdByIdentityId(Guid IdentityId, bool trackChanges)
+        {
+            Guid? DeliveryCompanyUserId = await FindByCondition(DCU=>DCU.UserId==IdentityId, trackChanges).Select(DCU=>DCU.Id).FirstOrDefaultAsync();
+            return DeliveryCompanyUserId;
+        }
+
         public void UpdateDeliveryCompanyUser(DeliveryCompanyUser deliveryCompanyUser)
         {
             Update(deliveryCompanyUser);
