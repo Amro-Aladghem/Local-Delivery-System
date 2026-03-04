@@ -9,7 +9,7 @@ namespace Entities.Models
 {
     public class DeliveryCompany : Institution
     {
-        public DeliveryFeesCalculationByType DeliveryFeesCalculationByType { get; set; }
+        public DeliveryFeesCalculationByType? DeliveryFeesCalculationByType { get; set; }
         public Country Country { get; set; }
         public City City { get; set; }  
 
