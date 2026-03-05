@@ -1,10 +1,13 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Entities.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Presentation.Extentions;
 using Service.Contracts;
 using Service.DeliveryClientUserService;
+using Shared.DataTransferObjects.DeliveryClientOrganization;
 using Shared.DataTransferObjects.DeliveryClientUser;
+using Shared.DataTransferObjects.DeliveryCompany;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,26 +28,24 @@ namespace Presentation.Controllers
             _deliveryClientUser = deliveryClientUser;
         }
 
-        [HttpPost("register")]
-        [Authorize(Policy = "PreRegister")]
+        [HttpPost("org/create")]
+        [Authorize(Policy = "DeliveryClient")]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<DeliveryClientUserDto>> RegisterDeliveryClientUser(AddDeliveryClientUserRequest addDeliveryClientUserRequest)
+        public async Task<ActionResult<bool>> CreateDeliveryCopmanyForUser(AddDeliveryClientOrganizationRequest request)
         {
-            string? UserId = User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+            Guid? ProfileId = HttpContext.GetProfileIdAsGuid();
 
-            if (UserId is null)
-                return BadRequest(new { message = "Invalid Data" });
+            if (ProfileId is null)
+                return BadRequest(new { message = "Profile Id is missing" });
 
-            RegisterDeliveryClientUserResult? result = await _deliveryClientUser.CreateDeliveryClientUser(addDeliveryClientUserRequest,new Guid(UserId));
+            if (!await _deliveryClientUser.IsDeliveryClientUserHasManagerRole(ProfileId.Value))
+                return BadRequest(new { message = "You don't have permession to create delivery company!" });
 
-            if (result is null)
-                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Failed To Register,Server Error!" });
+            bool result = await _deliveryClientUser.HandleCreateClientOrgForUser(request, ProfileId.Value);
 
-            Response.SetTokendDtoIntoCoookie(result.TokenDto, 7, true);
-
-            return Ok(result.DeliveryClientUserDto);
+            return Ok(result);
         }
     }
 }

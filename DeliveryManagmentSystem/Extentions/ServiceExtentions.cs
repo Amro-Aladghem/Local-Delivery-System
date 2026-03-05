@@ -5,6 +5,7 @@ using Service.Contracts;
 using Service.DeliveryClientUserService;
 using Service.DeliveryCompanyUserService;
 using Service.UserService;
+using System.Security.Claims;
 using System.Text;
 
 
@@ -49,6 +50,36 @@ namespace DeliveryManagmentSystem.Extentions
             services.AddScoped<IDeliveryCompanyUser, DeliveryCompanyUserService>();
             services.AddScoped<IDeliveryClientUser, DeliveryClientUserService>();
             services.AddScoped<IAuthService, AuthService>();
+        }
+
+        public static void ConfigureAuthorizationPolicies(this IServiceCollection services)
+        {
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("PreRegisterUser", policy =>
+                {
+                    policy.RequireRole("PreRegister");
+                    policy.RequireClaim(ClaimTypes.NameIdentifier);
+                });
+
+                options.AddPolicy("DeliveryClientUser", policy =>
+                {
+                    policy.RequireRole("DeliveryClient");
+                    policy.RequireClaim(ClaimTypes.NameIdentifier);
+                });
+
+                options.AddPolicy("DeliveryCompanyUser", policy =>
+                {
+                    policy.RequireRole("DeliveryCompanyUser");
+                    policy.RequireClaim(ClaimTypes.NameIdentifier);
+                });
+
+                options.AddPolicy("AllAuthUsers", policy =>
+                {
+                    policy.RequireClaim(ClaimTypes.NameIdentifier);
+                    policy.RequireRole(["DeliveryCompanyUser", "DeliveryClient","Driver"]);
+                });
+            });
         }
     }
 }

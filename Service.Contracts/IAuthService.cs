@@ -10,5 +10,6 @@ namespace Service.Contracts
         Task<PreRegisterResponseResult?> PreRegisterUser(UserPreRegisterRequest request);
         Task<TokenDto?> RefreshToken(string AccessToken, string RefreshToken);
         Task<TokenDto?> GenerateTokenForUser(Guid userId, Guid? profileId = null);
+        Task<bool> LogoutUser(Guid userId);
     }
 }

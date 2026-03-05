@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -58,23 +59,6 @@ namespace Presentation.Controllers
             return Ok(Result.User);
         }
 
-        //[HttpPost("register")]
-        //[Authorize(Policy = "PreRegisterUser")]
-        //[ProducesResponseType(StatusCodes.Status400BadRequest)]
-        //[ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        //[ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        //public async Task<ActionResult<UserForAuthenticationResponse>> RegisterUser(UserForRegisterationRequest registerUserRequest)
-        //{
-        //    AuthUserResponseResult? Result = await _authService.RegisterUser(registerUserRequest);
-
-        //    if (Result == null)
-        //        return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Server Error!" });
-
-        //    Response.SetTokendDtoIntoCoookie(Result.Token, 7, true);
-
-        //    return Ok(Result.User);
-        //}
-
         [HttpPost("refresh")]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -97,5 +81,27 @@ namespace Presentation.Controllers
             return Ok(true);
         }
 
+        [HttpPost("logout")]
+        [Authorize(Policy = "AllAuthUsers")]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<bool>> Logout()
+        {
+            string? userId = User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+
+            if (!Guid.TryParse(userId, out var id))
+                return BadRequest(new { message = "userId is not valid!" });
+
+            bool isDone = await _authService.LogoutUser(id);
+
+            if (!isDone)
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Failed to logout" });
+
+            Response.Cookies.Delete("accessToken");
+            Response.Cookies.Delete("refreshToken");
+
+            return Ok(true);
+        }
     }
 }

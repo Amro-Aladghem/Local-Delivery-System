@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Entities.Models;
+using Shared.DataTransferObjects.DeliveryClientOrganization;
 using Shared.DataTransferObjects.DeliveryClientUser;
 using Shared.DataTransferObjects.DeliveryCompany;
 using Shared.DataTransferObjects.DeliveryCompanyUser;
@@ -24,6 +25,7 @@ namespace DeliveryManagmentSystem
             CreateMap<UserForAuthenticationResponse, DeliveryCompanyUserDto>();
 
             CreateMap<AddDeliveryCompanyRequest, DeliveryCompany>();
+            CreateMap<AddDeliveryClientOrganizationRequest, DeliveryClientOrganization>();
         }
     }
 }

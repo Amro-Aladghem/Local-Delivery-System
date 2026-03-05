@@ -283,5 +283,22 @@ namespace Service.UserService
             return await CreateToken(populateExp: true, user, profileId);
         }
 
+        public async Task<bool> LogoutUser(Guid userId)
+        {
+            User? user = await _userManager.FindByIdAsync(userId.ToString());
+
+            if (user is null)
+                return false;
+
+            user.ReffreshTokenExpired = null;
+            user.ReffreshToken = null;
+
+            var result = await _userManager.UpdateAsync(user);
+
+            if (!result.Succeeded)
+                return false;
+
+            return true;
+        }
     }
 }
