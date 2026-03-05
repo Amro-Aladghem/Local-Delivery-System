@@ -1,0 +1,14 @@
+﻿using Shared.DataTransferObjects.DeliveryCompany;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Service.Contracts
+{
+    public interface IDeliveryCompany
+    {
+        Task<Guid?> CreateDeliveryCompany(AddDeliveryCompanyRequest request);
+    }
+}

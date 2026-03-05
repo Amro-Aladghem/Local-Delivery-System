@@ -3,6 +3,7 @@ using DeliveryManagmentSystem.Extentions.Middlewares;
 using FluentValidation;
 using Shared;
 using System.Security.Claims;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,16 +19,14 @@ builder.Services.ConfigureJWT(builder.Configuration);
 builder.Services.AddJWTConfiguration(builder.Configuration);
 
 builder.Services.AddControllers()
-    .AddApplicationPart(typeof(Presentation.AssemblyReference).Assembly);
-
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy("PreRegisterUser", policy =>
+    .AddApplicationPart(typeof(Presentation.AssemblyReference).Assembly)
+    .AddJsonOptions(options =>
     {
-        policy.RequireRole("PreRegister");
-        policy.RequireClaim(ClaimTypes.NameIdentifier);
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
-});
+
+builder.Services.ConfigureAuthorizationPolicies();
+
 
 var app = builder.Build();
 

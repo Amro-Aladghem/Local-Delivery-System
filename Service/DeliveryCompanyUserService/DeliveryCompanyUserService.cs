@@ -2,17 +2,10 @@
 using Contracts;
 using Entities.Models;
 using Enums;
-using Repository;
 using Service.Contracts;
-using Service.UserService;
-using Shared.DataTransferObjects.DeliveryClientUser;
+using Shared.DataTransferObjects.DeliveryCompany;
 using Shared.DataTransferObjects.DeliveryCompanyUser;
 using Shared.DataTransferObjects.User;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Service.DeliveryCompanyUserService
 {
@@ -20,13 +13,15 @@ namespace Service.DeliveryCompanyUserService
     {
         private readonly IAuthService _authService;
         private readonly IManagerRepository _managerRepository;
+        private readonly IDeliveryCompany _deliveryCompany;
         private readonly IMapper _mapper;
 
-        public DeliveryCompanyUserService(IAuthService authService, IManagerRepository managerRepository, IMapper mapper)
+        public DeliveryCompanyUserService(IAuthService authService, IManagerRepository managerRepository, IMapper mapper, IDeliveryCompany deliveryCompany)
         {
             _authService = authService;
             _managerRepository = managerRepository;
             _mapper = mapper;
+            _deliveryCompany = deliveryCompany;
         }
         private RegisterDeliveryCompanyUserResult? MappingRegisterUser(UserForAuthenticationResponse authUser, TokenDto tokenDto)
         {
@@ -73,6 +68,52 @@ namespace Service.DeliveryCompanyUserService
                 }
             }
         }
+
+        public async Task<bool> IsDeliveryCompanyUserHasManagerRole(Guid ProfileId)
+        {
+            DeliveryCompanyUser deliveryCompanyUser = await _managerRepository.DeliveryCompanyUser.GetDeliveryCompanyUser(ProfileId, false);
+
+            return deliveryCompanyUser.DeliveryCompanyUserRole == DeliveryCompanyUserRole.Manager;
+        }
+
+        private async Task<bool> SetDeliveryCompanyToUser(Guid ProfileId, Guid DeliveryCompanyId)
+        {
+            DeliveryCompanyUser deliveryCompanyUser = await _managerRepository.DeliveryCompanyUser.GetDeliveryCompanyUser(ProfileId, true);
+
+            deliveryCompanyUser.DeliveryCompanyId = DeliveryCompanyId;
+
+            _managerRepository.DeliveryCompanyUser.UpdateDeliveryCompanyUser(deliveryCompanyUser);
+
+            return await _managerRepository.SaveAsync();
+        }
+
+        public async Task<bool> HandleCreateCompanyForUser(AddDeliveryCompanyRequest addDeliveryCompanyRequest,Guid ProfileId)
+        {
+            using(var transaction = await  _managerRepository.BeginTransactionAsync())
+            {
+                try
+                {
+                    Guid? DeliveryCompanyId = await _deliveryCompany.CreateDeliveryCompany(addDeliveryCompanyRequest);
+
+                    if (DeliveryCompanyId is null)
+                        throw new Exception("Failed to Create Delivery Company!");
+
+                    bool IsDone = await SetDeliveryCompanyToUser(ProfileId, DeliveryCompanyId.Value);
+
+                    if(IsDone)
+                        throw new Exception("Failed to Create Delivery Company!");
+
+                    await _managerRepository.CommitTransactionAsync();
+                    return true;
+                }
+                catch
+                {
+                    await _managerRepository.RollbackTransactionAsync();
+                    return false;
+                }
+            }
+        }
+
     }
 }
 

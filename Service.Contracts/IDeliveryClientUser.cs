@@ -1,4 +1,5 @@
-﻿using Shared.DataTransferObjects.DeliveryClientUser;
+﻿using Shared.DataTransferObjects.DeliveryClientOrganization;
+using Shared.DataTransferObjects.DeliveryClientUser;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,6 +10,8 @@ namespace Service.Contracts
 {
     public interface IDeliveryClientUser
     {
-        public Task<RegisterDeliveryClientUserResult?> CreateDeliveryClientUser(AddDeliveryClientUserRequest request, Guid PreRegisterUserId);
+        Task<RegisterDeliveryClientUserResult?> CreateDeliveryClientUser(AddDeliveryClientUserRequest request, Guid PreRegisterUserId);
+        Task<bool> IsDeliveryClientUserHasManagerRole(Guid ProfileId);
+        Task<bool> HandleCreateClientOrgForUser(AddDeliveryClientOrganizationRequest addDeliveryCompanyRequest, Guid ProfileId);
     }
 }

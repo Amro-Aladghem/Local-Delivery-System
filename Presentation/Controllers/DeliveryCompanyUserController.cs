@@ -1,23 +1,17 @@
-﻿using Entities.Models;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Presentation.Extentions;
 using Service.Contracts;
-using Shared.DataTransferObjects.DeliveryClientUser;
+using Shared.DataTransferObjects.DeliveryCompany;
 using Shared.DataTransferObjects.DeliveryCompanyUser;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Presentation.Controllers
 {
-    [Route("api/deliveryClientUser")]
+    [Route("api/deliveryCompanyUsers")]
     [ApiController]
-    public class DeliveryCompanyUserController :ControllerBase
+    public class DeliveryCompanyUserController : ControllerBase
     {
         private readonly IDeliveryCompanyUser _deliveryCompanyUser;
 
@@ -48,6 +42,25 @@ namespace Presentation.Controllers
             return Ok(result.DeliveryCompanyUserDto);
         }
 
+        [HttpPost("company/create")]
+        [Authorize(Policy = "DeliveryCompanyUser")]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<bool>> CreateDeliveryCopmanyForUser(AddDeliveryCompanyRequest addDeliveryCompanyRequest)
+        {
+            Guid? ProfileId = HttpContext.GetProfileIdAsGuid();
+            
+            if (ProfileId is null)
+                return BadRequest(new { message = "Profile Id is missing" });
+
+            if (!await _deliveryCompanyUser.IsDeliveryCompanyUserHasManagerRole(ProfileId.Value))
+                return BadRequest(new { message = "You don't have permession to create delivery company!" });
+
+            bool result = await _deliveryCompanyUser.HandleCreateCompanyForUser(addDeliveryCompanyRequest, ProfileId.Value);
+
+            return Ok(result);
+        }
 
     }
 }
