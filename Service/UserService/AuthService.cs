@@ -140,6 +140,27 @@ namespace Service.UserService
             return AuthUser;
         }
 
+        public async Task<UserForAuthenticationResponse?> CreateUserByManagerRole(UserForRegisterationRequest request,string systemUserRole,string Password)
+        {
+            User user = _mapper.Map<User>(request);
+            user.IsActive=true;
+
+            var userResult = await _userManager.CreateAsync(user,Password);
+
+            if (!userResult.Succeeded)
+                return null;
+
+            var roleResult = await _userManager.AddToRoleAsync(user, systemUserRole);
+
+            if (!roleResult.Succeeded)
+                return null;
+
+            UserForAuthenticationResponse AuthUser = _mapper.Map<User, UserForAuthenticationResponse>(user);
+            AuthUser.SystemRole = systemUserRole;
+
+            return AuthUser;
+        }
+
         private SigningCredentials GetSigningCredentials()
         {
             var key = Encoding.UTF8.GetBytes(_jwtConfiguration.Secrete);

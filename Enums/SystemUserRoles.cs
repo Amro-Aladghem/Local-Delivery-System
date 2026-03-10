@@ -10,6 +10,7 @@ namespace Enums
     {
         PreRegister,
         DeliveryCompanyUser,
-        DeliveryClient
+        DeliveryClient,
+        Driver
     }
 }
