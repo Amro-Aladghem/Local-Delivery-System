@@ -4,7 +4,9 @@ using Shared.DataTransferObjects.DeliveryClientOrganization;
 using Shared.DataTransferObjects.DeliveryClientUser;
 using Shared.DataTransferObjects.DeliveryCompany;
 using Shared.DataTransferObjects.DeliveryCompanyUser;
+using Shared.DataTransferObjects.Driver;
 using Shared.DataTransferObjects.User;
+using Shared.InternalModels;
 using System.ComponentModel;
 
 namespace DeliveryManagmentSystem
@@ -26,6 +28,9 @@ namespace DeliveryManagmentSystem
 
             CreateMap<AddDeliveryCompanyRequest, DeliveryCompany>();
             CreateMap<AddDeliveryClientOrganizationRequest, DeliveryClientOrganization>();
+            CreateMap<Driver, AddDriverRequest>();
+            CreateMap<DeliveryCompanyUser, DeliveryCompanyUserModel>();
+            CreateMap<DeliveryClientUser, DeliveryClientUserModel>();
         }
     }
 }

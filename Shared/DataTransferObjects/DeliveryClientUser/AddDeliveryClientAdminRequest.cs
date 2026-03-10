@@ -7,7 +7,8 @@ using System.Threading.Tasks;
 
 namespace Shared.DataTransferObjects.DeliveryClientUser
 {
-    public record AddDeliveryClientUserRequest : UserForRegisterationRequest
+    public record AddDeliveryClientAdminRequest : UserForRegisterationRequest
     {
+        public string Password {  get; set; }
     }
 }

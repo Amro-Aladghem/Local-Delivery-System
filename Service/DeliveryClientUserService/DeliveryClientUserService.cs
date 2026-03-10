@@ -6,7 +6,9 @@ using Enums;
 using Service.Contracts;
 using Shared.DataTransferObjects.DeliveryClientOrganization;
 using Shared.DataTransferObjects.DeliveryClientUser;
+using Shared.DataTransferObjects.Driver;
 using Shared.DataTransferObjects.User;
+using Shared.InternalModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -110,6 +112,53 @@ namespace Service.DeliveryClientUserService
 
                     if (IsDone)
                         throw new Exception("Failed to Create Delivery Company!");
+
+                    await _managerRepository.CommitTransactionAsync();
+                    return true;
+                }
+                catch
+                {
+                    await _managerRepository.RollbackTransactionAsync();
+                    return false;
+                }
+            }
+        }
+
+        public async Task<DeliveryClientUserModel> GetDeliveryClientUserModel(Guid ProfileId)
+        {
+            DeliveryClientUser deliveryClientUser = await _managerRepository.DeliveryClientUser.GetDeliveryClientUser(ProfileId, false);
+
+            return _mapper.Map<DeliveryClientUserModel>(deliveryClientUser);
+        }
+
+        public async Task<bool> HandleCreateAdminUserForOrg(AddDeliveryClientAdminRequest addDeliveryClientAdminRequest,Guid DeliveryClientOrgId)
+        {
+            using(var transaction = await _managerRepository.BeginTransactionAsync())
+            {
+                try
+                {
+                    UserForAuthenticationResponse? user = await _authService
+                        .CreateUserByManagerRole(addDeliveryClientAdminRequest, SystemUserRoles.DeliveryClient.ToString(), addDeliveryClientAdminRequest.Password);
+
+                    if (user is null)
+                        throw new Exception("Failed to create user for driver");
+
+                    DeliveryClientUser deliveryClientUser = new DeliveryClientUser()
+                    {
+                        UserId = user.Id,
+                        DeliveryClientOrgUserRole = DeliveryClientOrgUserRole.Admin,
+                        DeliveryClientOrganizationId= DeliveryClientOrgId
+                    };
+
+                    _managerRepository.DeliveryClientUser.CreateDeliveryClientUser(deliveryClientUser);
+
+                    if (!await _managerRepository.SaveAsync())
+                        throw new Exception("Failed To Create DeliveryClientUser");
+
+                    bool IsDone = await _managerRepository.SaveAsync();
+
+                    if(!IsDone)
+                        throw new Exception("Failed to create user for Client");
 
                     await _managerRepository.CommitTransactionAsync();
                     return true;

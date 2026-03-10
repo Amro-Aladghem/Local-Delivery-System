@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Shared.DataTransferObjects.DeliveryCompanyUser
 {
-    public class AddDeliveryCompanyUserDto:UserForRegisterationRequest
+    public record AddDeliveryCompanyUserDto:UserForRegisterationRequest
     {
     }
 }

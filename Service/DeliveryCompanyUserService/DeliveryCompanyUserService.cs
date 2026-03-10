@@ -6,6 +6,7 @@ using Service.Contracts;
 using Shared.DataTransferObjects.DeliveryCompany;
 using Shared.DataTransferObjects.DeliveryCompanyUser;
 using Shared.DataTransferObjects.User;
+using Shared.InternalModels;
 
 namespace Service.DeliveryCompanyUserService
 {
@@ -69,13 +70,6 @@ namespace Service.DeliveryCompanyUserService
             }
         }
 
-        public async Task<bool> IsDeliveryCompanyUserHasManagerRole(Guid ProfileId)
-        {
-            DeliveryCompanyUser deliveryCompanyUser = await _managerRepository.DeliveryCompanyUser.GetDeliveryCompanyUser(ProfileId, false);
-
-            return deliveryCompanyUser.DeliveryCompanyUserRole == DeliveryCompanyUserRole.Manager;
-        }
-
         private async Task<bool> SetDeliveryCompanyToUser(Guid ProfileId, Guid DeliveryCompanyId)
         {
             DeliveryCompanyUser deliveryCompanyUser = await _managerRepository.DeliveryCompanyUser.GetDeliveryCompanyUser(ProfileId, true);
@@ -114,6 +108,19 @@ namespace Service.DeliveryCompanyUserService
             }
         }
 
+        public async Task<Guid?> GetUserDeliveryCompanyId(Guid ProfileId)
+        {
+            DeliveryCompanyUser deliveryCompanyUser = await _managerRepository.DeliveryCompanyUser.GetDeliveryCompanyUser(ProfileId, false);
+
+            return deliveryCompanyUser.DeliveryCompanyId;
+        }
+
+        public async Task<DeliveryCompanyUserModel> GetDeliveryCompanyUserModel(Guid ProfileId)
+        {
+           DeliveryCompanyUser deliveryCompanyUser = await _managerRepository.DeliveryCompanyUser.GetDeliveryCompanyUser(ProfileId, false);
+
+           return _mapper.Map<DeliveryCompanyUserModel>(deliveryCompanyUser);    
+        }
     }
 }
 

@@ -11,5 +11,6 @@ namespace Service.Contracts
         Task<TokenDto?> RefreshToken(string AccessToken, string RefreshToken);
         Task<TokenDto?> GenerateTokenForUser(Guid userId, Guid? profileId = null);
         Task<bool> LogoutUser(Guid userId);
+        Task<UserForAuthenticationResponse?> CreateUserByManagerRole(UserForRegisterationRequest request, string systemUserRole,string Password);
     }
 }

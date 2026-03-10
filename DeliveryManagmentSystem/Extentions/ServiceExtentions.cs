@@ -4,6 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using Service.Contracts;
 using Service.DeliveryClientUserService;
 using Service.DeliveryCompanyUserService;
+using Service.DriverService;
 using Service.UserService;
 using System.Security.Claims;
 using System.Text;
@@ -50,6 +51,7 @@ namespace DeliveryManagmentSystem.Extentions
             services.AddScoped<IDeliveryCompanyUser, DeliveryCompanyUserService>();
             services.AddScoped<IDeliveryClientUser, DeliveryClientUserService>();
             services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IDriver, DriverService>();
         }
 
         public static void ConfigureAuthorizationPolicies(this IServiceCollection services)
